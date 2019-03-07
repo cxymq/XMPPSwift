@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="LoginViewController" customModule="XMPPTest" customModuleProvider="target">
+            <connections>
+                <outlet property="pwdTf" destination="4BY-g3-PHg" id="40C-FW-KlY"/>
+                <outlet property="userNameTf" destination="hJ9-qf-IIJ" id="qgt-ue-Z2f"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="wang" borderStyle="roundedRect" placeholder="用户名" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="hJ9-qf-IIJ">
+                    <rect key="frame" x="97.5" y="180" width="180" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="30" id="8St-BN-Iuf"/>
+                        <constraint firstAttribute="width" constant="180" id="vH9-9f-D0A"/>
+                    </constraints>
+                    <nil key="textColor"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <textInputTraits key="textInputTraits"/>
+                </textField>
+                <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="123456" borderStyle="roundedRect" placeholder="密码" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="4BY-g3-PHg">
+                    <rect key="frame" x="97.5" y="230" width="180" height="30"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="180" id="Zd6-C6-ONq"/>
+                        <constraint firstAttribute="height" constant="30" id="ePu-MT-WC5"/>
+                    </constraints>
+                    <nil key="textColor"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <textInputTraits key="textInputTraits"/>
+                </textField>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="SvF-I9-N6p">
+                    <rect key="frame" x="147.5" y="320" width="80" height="30"/>
+                    <color key="backgroundColor" red="0.37290871139999998" green="0.64668732880000002" blue="0.81694799659999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="30" id="b80-G2-gFN"/>
+                        <constraint firstAttribute="width" constant="80" id="of5-Pb-J42"/>
+                    </constraints>
+                    <state key="normal" title="登录">
+                        <color key="titleColor" red="0.93725490570000003" green="0.93725490570000003" blue="0.95686274770000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <connections>
+                        <action selector="loginXMPP:" destination="-1" eventType="touchUpInside" id="1WH-r1-qRp"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="4BY-g3-PHg" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="D8e-Xi-zdS"/>
+                <constraint firstItem="hJ9-qf-IIJ" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="DTG-jW-xlJ"/>
+                <constraint firstItem="hJ9-qf-IIJ" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="J8G-ST-eu4"/>
+                <constraint firstItem="hJ9-qf-IIJ" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="160" id="a5U-yT-QXe"/>
+                <constraint firstItem="SvF-I9-N6p" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="b3n-2a-pli"/>
+                <constraint firstItem="SvF-I9-N6p" firstAttribute="top" secondItem="4BY-g3-PHg" secondAttribute="bottom" constant="60" id="iNg-rO-PgZ"/>
+                <constraint firstItem="4BY-g3-PHg" firstAttribute="top" secondItem="hJ9-qf-IIJ" secondAttribute="bottom" constant="20" id="lyx-ZI-S1v"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="fnl-2z-Ty3"/>
+        </view>
+    </objects>
+</document>
