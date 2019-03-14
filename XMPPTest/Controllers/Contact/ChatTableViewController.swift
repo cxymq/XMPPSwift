@@ -9,7 +9,7 @@
 import UIKit
 import XMPPFramework
 
-class ChatTableViewController: UITableViewController, XMPPStreamDelegate {
+class ChatTableViewController: UITableViewController, XmppManagerDelegate {
     
     var messages: NSMutableArray?
     
@@ -24,8 +24,8 @@ class ChatTableViewController: UITableViewController, XMPPStreamDelegate {
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
         let xmppManager = XmppManager.sharedInstance()
-        xmppManager.xmppStream.addDelegate(self, delegateQueue: DispatchQueue.main)
-        
+        xmppManager.delegate = self
+
         messages = NSMutableArray.init()
         
         tableView.register(UINib(nibName: "ChatCell", bundle: nil), forCellReuseIdentifier: "ChatCell")
@@ -50,10 +50,8 @@ class ChatTableViewController: UITableViewController, XMPPStreamDelegate {
     }
     
     
-    
-    //MARK: ------XMPPStreamDelegate
-    //接收消息
-    func xmppStream(_ sender: XMPPStream!, didReceive message: XMPPMessage!) {
+    //MARK: ------ XmppManagerDelegate
+    func xmppReceiveMessage(xmppStream: XMPPStream, message: XMPPMessage) {
         let text = message.body()
         if let msg = text {
             print("ChatTableViewController收到消息\n")
@@ -62,11 +60,9 @@ class ChatTableViewController: UITableViewController, XMPPStreamDelegate {
             messages?.add(chatmsgModel)
             tableView.reloadData()
         }
-        
     }
     
-    //监听消息发送成功
-    func xmppStream(_ sender: XMPPStream!, didSend message: XMPPMessage!) {
+    func xmppDidSendMessage(xmppStream: XMPPStream, message: XMPPMessage) {
         let text = message.body()
         if let msg = text {
             let chatmsgModel = ChatMessageModel.init(isSelf: true, text: msg)
@@ -75,8 +71,8 @@ class ChatTableViewController: UITableViewController, XMPPStreamDelegate {
         }
     }
     
-    func xmppStream(_ sender: XMPPStream!, didFailToSend message: XMPPMessage!, error: Error!) {
-        print("消息发送失败、\(String(describing: error))")
+    func xmppDidFailSendMessage(xmppStream: XMPPStream, message: XMPPMessage, error: Error) {
+        
     }
 
     /*

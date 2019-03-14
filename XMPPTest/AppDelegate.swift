@@ -17,6 +17,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
+        //开启通知
+        let settings = UIUserNotificationSettings(types: [.alert, .badge, .sound],
+                                                  categories: nil)
+        application.registerUserNotificationSettings(settings)
+        
         let loginVC = LoginViewController()
         
         self.window = UIWindow(frame: UIScreen.main.bounds)
@@ -36,14 +41,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        
+        //虽然定义了后台获取的最短时间，但iOS会自行以它认定的最佳时间来唤醒程序，这个我们无法控制
+        //UIApplicationBackgroundFetchIntervalMinimum 尽可能频繁的调用我们的Fetch方法
+        application.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
+        
+        let status = XmppManager.instance.xmppStream.isConnected()
+        print("applicationDidEnterBackground状态\(status)")
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        let status = XmppManager.instance.xmppStream.isConnected()
+        print("applicationWillEnterForeground状态\(status)")
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        let status = XmppManager.instance.xmppStream.isConnected()
+        print("applicationDidBecomeActive状态\(status)")
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

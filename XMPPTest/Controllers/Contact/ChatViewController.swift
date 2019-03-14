@@ -25,7 +25,7 @@ class ChatViewController: UIViewController, UITextFieldDelegate {
     
     @IBAction func sendMessage(_ sender: Any) {
         if messageTf!.text?.isEmpty == false {
-            xmppManager.sendMessage(userName: (friendModel?.jid?.bare())!, text: messageTf.text!)
+            xmppManager.sendMessage(userName: (friendModel?.jid?.full())!, text: messageTf.text!)
             messageTf.text = ""
             //放弃第一响应者
             messageTf.resignFirstResponder()

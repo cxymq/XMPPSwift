@@ -10,6 +10,26 @@ import UIKit
 
 import XMPPFramework
 
+struct Constants {
+    static let XMPP_DOMAIN = "192.168.11.31"
+}
+
+
+//加class，表示只能由class遵守该协议，否则如果被struct遵守，使用weak修饰delegate会有问题，struct无引用计数概念
+@objc protocol XmppManagerDelegate: class {
+    //收到消息
+    @objc optional func xmppReceiveMessage(xmppStream: XMPPStream, message: XMPPMessage)
+    //消息发送失败
+    @objc optional func xmppDidFailSendMessage(xmppStream: XMPPStream, message: XMPPMessage, error: Error)
+    //消息发送成功
+    @objc optional func xmppDidSendMessage(xmppStream: XMPPStream, message: XMPPMessage)
+    
+    //获取好友状态改变
+    @objc optional func xmppDidReceivePresence(xmppStream: XMPPStream, presence: XMPPPresence)
+    //收到添加好友请求
+    @objc optional func xmppDidReceivePresenceSubscriptionRequest(xmppRoster: XMPPRoster, presence: XMPPPresence)
+}
+
 class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedResultsControllerDelegate {
     
     //单例
@@ -35,6 +55,8 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         return instance
     }
     
+    weak var delegate: XmppManagerDelegate?
+    
     override init() {
         if xmppStream == nil {
             xmppStream = XMPPStream()
@@ -49,15 +71,10 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         }
         if xmppAutoPing == nil {
             xmppAutoPing = XMPPAutoPing.init()
-            //定时发送ping,要求对方返回ping,因此这个时间我们需要设置
-            xmppAutoPing?.pingInterval = 1000
-            //如果是普通的用户来得ping，一样会响应
-            xmppAutoPing?.respondsToQueries = true
-            //这个过程是C---->S  ;观察 S--->C(需要在服务器设置）
+            
         }
         if xmppReconnect == nil {
             xmppReconnect = XMPPReconnect.init()
-            xmppReconnect?.autoReconnect = true
         }
         if roster == nil {
             roster = NSMutableArray.init()
@@ -92,7 +109,7 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         
         if !xmppStream.isConnected() {
             //用户名
-            let jid = XMPPJID(user: userName, domain: "192.168.11.31", resource: "Contacts")
+            let jid = XMPPJID(user: userName, domain: Constants.XMPP_DOMAIN, resource: nil)
 //            let jid = XMPPJID(string: userName)
             xmppStream.myJID = jid
             //连接服务器
@@ -119,7 +136,7 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     func sendMessage(userName: String, text: String) {
         print("发送消息\n")
         let jid = XMPPJID(string: userName)
-//        let jid = XMPPJID(user: "wang", domain: "192.168.11.31", resource: "Contacts")
+//        let jid = XMPPJID(user: userName, domain: Constants.XMPP_DOMAIN, resource: nil)
         let message = XMPPMessage(type: "chat", to: jid)
         message?.addBody(text)
         if let msg = message {
@@ -134,6 +151,7 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     //添加好友
     func addFriend(jid: XMPPJID, nickName: String) {
         xmppRoster?.addUser(jid, withNickname: nickName)
+//        xmppRoster?.addUser(jid, withNickname: nickName, groups: nil, subscribeToPresence: true)
     }
     //删除好友
     func deleteFriend(jid: XMPPJID) {
@@ -164,7 +182,18 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     func xmppStreamDidAuthenticate(_ sender: XMPPStream!) {
         print("认证成功")
         
+        //定时发送ping,要求对方返回ping,因此这个时间我们需要设置
+        xmppAutoPing?.pingInterval = 1000
+        //如果是普通的用户来得ping，一样会响应
+        xmppAutoPing?.respondsToQueries = true
+        //这个过程是C---->S  ;观察 S--->C(需要在服务器设置）
+        
+        xmppReconnect?.autoReconnect = true
+        
         _setActive()
+        
+        //允许后台模式(注意ios模拟器上是不支持后台socket的)
+        xmppStream.enableBackgroundingOnSocket = true
         
         let presence = XMPPPresence(type: "available")
         xmppStream.send(presence)
@@ -188,7 +217,43 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
             print("收到消息\n")
             print(msg)
         }
+        if delegate != nil {
+            delegate?.xmppReceiveMessage!(xmppStream: sender, message: message)
+        }
         
+        if UIApplication.shared.applicationState == .background {
+            let localNoti = UILocalNotification.init()
+            localNoti.alertAction = "OK"
+            localNoti.alertTitle = xmppStream.remoteJID.bare()
+            localNoti.alertBody = text
+            localNoti.applicationIconBadgeNumber = UIApplication.shared.applicationIconBadgeNumber+1
+            UIApplication.shared.presentLocalNotificationNow(localNoti)
+        }
+        
+    }
+    
+    //获取好友状态改变的回调
+    func xmppStream(_ sender: XMPPStream!, didReceive presence: XMPPPresence!) {
+        let presenceType = presence.type()
+        let presenceFrom = presence.from()?.user
+        print("\(String(describing: presenceFrom))状态：\(String(describing: presenceType))")
+        if delegate != nil {
+            delegate?.xmppDidReceivePresence!(xmppStream: xmppStream, presence: presence)
+        }
+    }
+    
+    //监听消息发送成功
+    func xmppStream(_ sender: XMPPStream!, didSend message: XMPPMessage!) {
+        print("消息发送成功、\(String(describing: message.body()))")
+        if delegate != nil {
+            delegate?.xmppDidSendMessage!(xmppStream: xmppStream, message: message)
+        }
+    }
+    func xmppStream(_ sender: XMPPStream!, didFailToSend message: XMPPMessage!, error: Error!) {
+        print("消息发送失败、\(String(describing: error))")
+        if delegate != nil {
+            delegate?.xmppDidFailSendMessage!(xmppStream: xmppStream, message: message, error: error)
+        }
     }
     
     //MARK: ------ roster
@@ -239,7 +304,8 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
             print(friendModel)
             roster?.add(friendModel)
             //通知ContactViewController已经获取到联系人
-            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "Get_Roster")))
+//            NotificationCenter.default.post(Notification(name: Notification.Name(rawValue: "Get_Roster")))
+            NotificationCenter.default.post(name: NSNotification.Name.init(rawValue: "Get_Roster"), object: roster)
         }
     }
     
@@ -261,10 +327,10 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     func xmppRoster(_ sender: XMPPRoster!, didReceiveRosterItem item: DDXMLElement!) {
         //得到jid
         let jid = item.attribute(forName: "jid")?.stringValue
-        let alias = item.attribute(forName: "alias")?.stringValue
+        let type = item.attribute(forName: "type")?.stringValue
         //转换XMPPJid类型
 //        let xmppJid = XMPPJID.init(string: jid)
-        print("来自>>>>>>>>\(String(describing: jid))>>>>>>好友的操作\(String(describing: alias))")
+        print("来自>>>>>>>>\(String(describing: jid))>>>>>>好友的操作\(String(describing: type))")
     }
     
     //收到好友请求,添加好友一定会订阅他，接受他的订阅不一定要添加对方为好友
@@ -274,6 +340,16 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         let status = presence.status()
         let type = presence.type() as String
         print("\(String(describing: show))<<<<<<\(String(describing: status))<<<<<<<<\(type)")
+        if delegate != nil {
+            delegate?.xmppDidReceivePresenceSubscriptionRequest!(xmppRoster: sender, presence: presence)
+        }
+    }
+    
+    //MARK: ------ NSFetchedResultsControllerDelegate
+    //
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        roster?.removeAllObjects()
+        loadFriends()
     }
     
     //MARK: ------ private method
