@@ -12,6 +12,11 @@ import XMPPFramework
 
 struct Constants {
     static let XMPP_DOMAIN = "192.168.11.31"
+    static let XMPP_LOCALHOST = "localhost"
+    static let XMPP_SUBDOMAIN = "cintel"
+    
+//    static let XMPP_DOMAIN_WEB = "http://wx.cintelcloud.com:9090/"
+//    static let XMPP_PWD = "123456"
 }
 
 
@@ -30,7 +35,7 @@ struct Constants {
     @objc optional func xmppDidReceivePresenceSubscriptionRequest(xmppRoster: XMPPRoster, presence: XMPPPresence)
 }
 
-class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedResultsControllerDelegate {
+class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedResultsControllerDelegate, XMPPRoomDelegate {
     
     //单例
     //简便实现
@@ -97,6 +102,7 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     var xmppAutoPing: XMPPAutoPing?
     var xmppReconnect: XMPPReconnect?
     
+    //
     
     
     //MARK: ------ xmppStream
@@ -158,6 +164,66 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         xmppRoster?.removeUser(jid)
     }
     
+    //添加群组
+    func addGroup(name: String, roomName: String?) {
+        var currentName = roomName
+        if roomName == nil {
+            //创建群组JID，以时间戳当作name
+            let formatter = DateFormatter.init()
+            formatter.dateFormat = "yyyyMMddHHmmss"
+            let currentTime = formatter.string(from: Date.init())
+            currentName = currentTime
+        }
+        let roomJID = NSString.init(format: "%@@%@.%@", currentName!, Constants.XMPP_SUBDOMAIN, Constants.XMPP_LOCALHOST)
+        let jid = XMPPJID.init(string: roomJID as String)
+        
+        //使用XMPP提供的示例类存储， 也可以自定义继承自XMPPCoreDataStorage的类
+        let xmppRoomHybridStorage = XMPPRoomHybridStorage.sharedInstance()
+        let xmppRoom = XMPPRoom.init(roomStorage: xmppRoomHybridStorage, jid: jid, dispatchQueue: DispatchQueue.main)
+        xmppRoom?.activate(xmppStream)
+        xmppRoom?.addDelegate(self, delegateQueue: DispatchQueue.main)
+        xmppRoom?.join(usingNickname: name, history: nil, password: nil)
+    }
+    
+    //加载rooms
+    func loadRooms() {
+        let queryElement = XMLElement.element(withName: "query", uri: "http://jabber.org/protocol/disco#items")
+        let iqElement = XMLElement.element(withName: "iq") as! XMLElement
+        iqElement.addAttribute(withName: "type", stringValue: "get")
+        iqElement.addAttribute(withName: "from", stringValue: xmppStream.myJID.bare())
+        let service = NSString.init(format: "%@.%@", Constants.XMPP_SUBDOMAIN, Constants.XMPP_LOCALHOST)
+        iqElement.addAttribute(withName: "to", stringValue: service as String)
+        iqElement.addAttribute(withName: "id", stringValue: "getMyRooms")
+        iqElement.addChild(queryElement as! DDXMLNode)
+        xmppStream.send(iqElement)
+    }
+    
+    //配置房间
+    func configNewRoom(xmppRoom: XMPPRoom) {
+        let x = XMLElement.init(name: "x", uri: "jabber:x:data")
+        var p = XMLElement.init(name: "field")
+        p.addAttribute(withName: "var", stringValue: "muc#roomconfig_persistentroom") //永久房间
+        p.addChild(XMLElement.element(withName: "value", stringValue: "1") as! DDXMLNode)
+        x.addChild(p)
+        
+        p = XMLElement.element(withName: "field") as! XMLElement
+        p.addAttribute(withName: "var", stringValue: "muc#roomconfig_maxusers") //最大用户数
+        p.addChild(XMLElement.element(withName: "value", stringValue: "100") as! DDXMLNode)
+        x.addChild(p)
+        
+        p = XMLElement.element(withName: "field") as! XMLElement
+        p.addAttribute(withName: "var", stringValue: "muc#roomconfig_publicroom") //公共房间
+        p.addChild(XMLElement.element(withName: "value", stringValue: "0") as! DDXMLNode)
+        x.addChild(p)
+        
+        p = XMLElement.element(withName: "field") as! XMLElement
+        p.addAttribute(withName: "var", stringValue: "muc#roomconfig_allowinvites") //允许邀请
+        p.addChild(XMLElement.element(withName: "value", stringValue: "1") as! DDXMLNode)
+        x.addChild(p)
+        
+        xmppRoom.configureRoom(usingOptions: x)
+    }
+    
     //MARK: ------ XMPPStreamDelegate
     //连接成功的回调
     func xmppStream(_ sender: XMPPStream!, socketDidConnect socket: GCDAsyncSocket!) {
@@ -182,7 +248,7 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     func xmppStreamDidAuthenticate(_ sender: XMPPStream!) {
         print("认证成功")
         
-        //定时发送ping,要求对方返回ping,因此这个时间我们需要设置
+        //定时发送ping,要求对方返回pong,因此这个时间我们需要设置
         xmppAutoPing?.pingInterval = 1000
         //如果是普通的用户来得ping，一样会响应
         xmppAutoPing?.respondsToQueries = true
@@ -224,12 +290,38 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         if UIApplication.shared.applicationState == .background {
             let localNoti = UILocalNotification.init()
             localNoti.alertAction = "OK"
-            localNoti.alertTitle = xmppStream.remoteJID.bare()
+            localNoti.alertTitle = "消息"
             localNoti.alertBody = text
             localNoti.applicationIconBadgeNumber = UIApplication.shared.applicationIconBadgeNumber+1
             UIApplication.shared.presentLocalNotificationNow(localNoti)
         }
         
+    }
+    
+    func xmppStream(_ sender: XMPPStream!, didReceive iq: XMPPIQ!) -> Bool {
+        let elementID = iq.elementID()
+        if elementID != "getMyRooms" {
+            return true
+        }
+        
+        let results = iq.elements(forXmlns: "http://jabber.org/protocol/disco#items")
+        if (results?.count)! < 1 {
+            return true
+        }
+        
+        let rooms = NSMutableArray.init()
+        for element in (iq?.children)! {
+            if element.name == "query" {
+                for item in element.children! {
+                    if item.name == "item" {
+                        rooms.add(item)
+                    }
+                }
+            }
+        }
+        NotificationCenter.default.post(name: NSNotification.Name.init(rawValue: "XMPP_GET_GROUPS"), object: rooms)
+        
+        return true
     }
     
     //获取好友状态改变的回调
@@ -346,10 +438,34 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
     }
     
     //MARK: ------ NSFetchedResultsControllerDelegate
-    //
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-        roster?.removeAllObjects()
-        loadFriends()
+    
+    
+    
+    //MARK: ------ XMPPRoomDelegate
+    func xmppRoomDidCreate(_ sender: XMPPRoom!) {
+        print("房间创建成功")
+        configNewRoom(xmppRoom: sender)
+    }
+    
+    func xmppRoomDidJoin(_ sender: XMPPRoom!) {
+        print("加入房间成功")
+        
+    }
+    
+    func xmppRoom(_ sender: XMPPRoom!, didFetchConfigurationForm configForm: DDXMLElement!) {
+        print("获取房间配置 %@", configForm)
+    }
+    
+    func xmppRoom(_ sender: XMPPRoom!, didFetchBanList items: [Any]!) {
+        print("黑名单列表")
+    }
+    
+    func xmppRoom(_ sender: XMPPRoom!, didFetchMembersList items: [Any]!) {
+        print("成员列表")
+    }
+    
+    func xmppRoom(_ sender: XMPPRoom!, didFetchModeratorsList items: [Any]!) {
+        print("主持人列表")
     }
     
     //MARK: ------ private method
@@ -372,5 +488,5 @@ class XmppManager: NSObject, XMPPStreamDelegate, XMPPRosterDelegate, NSFetchedRe
         
         xmppStream.removeDelegate(self)
     }
-
+    
 }

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1441559E224E19A70010694C /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1441559D224E19A70010694C /* AudioToolbox.framework */; };
+		144B139F223A445100E64032 /* RoomsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 144B139E223A445000E64032 /* RoomsViewController.swift */; };
 		14C3C98A222E23DB009159E3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C3C989222E23DB009159E3 /* AppDelegate.swift */; };
 		14C3C98C222E23DB009159E3 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C3C98B222E23DB009159E3 /* ViewController.swift */; };
 		14C3C98F222E23DB009159E3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 14C3C98D222E23DB009159E3 /* Main.storyboard */; };
@@ -46,6 +48,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1441559C224E19960010694C /* XMPPTest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = XMPPTest.entitlements; sourceTree = "<group>"; };
+		1441559D224E19A70010694C /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		144B139E223A445000E64032 /* RoomsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomsViewController.swift; sourceTree = "<group>"; };
 		14C3C986222E23DB009159E3 /* XMPPTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XMPPTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		14C3C989222E23DB009159E3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		14C3C98B222E23DB009159E3 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -81,6 +86,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				38E7590C384FDE9CACD52310 /* Pods_XMPPTest.framework in Frameworks */,
+				1441559E224E19A70010694C /* AudioToolbox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +132,7 @@
 		14C3C988222E23DB009159E3 /* XMPPTest */ = {
 			isa = PBXGroup;
 			children = (
+				1441559C224E19960010694C /* XMPPTest.entitlements */,
 				14C3C9D2222FB693009159E3 /* View */,
 				14C3C9CE222FAACE009159E3 /* Model */,
 				14C3C9C0222E5927009159E3 /* Expand */,
@@ -183,6 +190,7 @@
 				14C3C9C4222E687C009159E3 /* ChatViewController.swift */,
 				14C3C9C5222E687C009159E3 /* ChatViewController.xib */,
 				14C3C9CA222E6C5C009159E3 /* ChatTableViewController.swift */,
+				144B139E223A445000E64032 /* RoomsViewController.swift */,
 			);
 			path = Contact;
 			sourceTree = "<group>";
@@ -265,6 +273,7 @@
 		80B0CE74F2917A44CE380B67 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1441559D224E19A70010694C /* AudioToolbox.framework */,
 				CF52ABE2E0B57A3F14F42F63 /* Pods_XMPPTest.framework */,
 			);
 			name = Frameworks;
@@ -342,6 +351,12 @@
 						CreatedOnToolsVersion = 10.1;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+							com.apple.DataProtection = {
+								enabled = 0;
+							};
+							com.apple.InterAppAudio = {
 								enabled = 1;
 							};
 						};
@@ -465,6 +480,7 @@
 				14C3C9D1222FAAFC009159E3 /* FriendModel.swift in Sources */,
 				14C3C98A222E23DB009159E3 /* AppDelegate.swift in Sources */,
 				14C3C9C6222E687C009159E3 /* ChatViewController.swift in Sources */,
+				144B139F223A445100E64032 /* RoomsViewController.swift in Sources */,
 				14C3C9C3222E5A45009159E3 /* XmppManager.swift in Sources */,
 				14C3C9CB222E6C5C009159E3 /* ChatTableViewController.swift in Sources */,
 				14C3C9E2222FC055009159E3 /* ChatMessageModel.swift in Sources */,
@@ -643,6 +659,7 @@
 			baseConfigurationReference = 50F541366922DB9687CEC6C4 /* Pods-XMPPTest.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = XMPPTest/XMPPTest.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = EJ429UWLN6;
 				INFOPLIST_FILE = XMPPTest/Info.plist;
@@ -663,6 +680,7 @@
 			baseConfigurationReference = 1A1474A07A737C350FE7A884 /* Pods-XMPPTest.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = XMPPTest/XMPPTest.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = EJ429UWLN6;
 				INFOPLIST_FILE = XMPPTest/Info.plist;

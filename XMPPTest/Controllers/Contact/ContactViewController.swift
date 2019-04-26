@@ -34,7 +34,9 @@ class ContactViewController: UIViewController, UITableViewDelegate, UITableViewD
         self.title = "好友列表"
         //添加好友按钮
         let btnItem = UIBarButtonItem.init(title: "add", style: .done, target: self, action: #selector(addFriend))
-        self.navigationItem.rightBarButtonItem = btnItem
+        let groupItem = UIBarButtonItem.init(title: "group", style: .done, target: self, action: #selector(showGroup))
+//        self.navigationItem.rightBarButtonItem = btnItem
+        self.navigationItem.rightBarButtonItems = [btnItem, groupItem]
         
         tableView = UITableView(frame: self.view.bounds, style: UITableView.Style.plain)
         tableView.delegate = self
@@ -71,6 +73,10 @@ class ContactViewController: UIViewController, UITableViewDelegate, UITableViewD
             }
         }))
         self.present(alert, animated: true, completion: nil)
+    }
+    
+    @objc func showGroup() {
+        self.navigationController?.pushViewController(RoomsViewController.init(), animated: true)
     }
     
     //MARK: ------ Notification
@@ -132,7 +138,7 @@ class ContactViewController: UIViewController, UITableViewDelegate, UITableViewD
         }
         
         for fm in roster! {
-            if (fm as! FriendModel).name == presenceFrom {
+            if (fm as! FriendModel).jid?.user == presenceFrom {
                 (fm as! FriendModel).status = status
             }
         }
